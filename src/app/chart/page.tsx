@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/chart"
 import Link from 'next/link'
 import useMockData from '@/hooks/use_mockData'
-import { useEffect } from "react"
 
 const chartConfig = {
     desktop: {
@@ -33,12 +32,7 @@ const chartConfig = {
 
 
 export default function MyChart() {
-    const { groupedData, data } = useMockData()
-
-    useEffect(() => {
-        console.log(data);
-
-    }, [data])
+    const { groupedData } = useMockData()
 
     return (
         <div className='flex flex-col'>

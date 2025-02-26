@@ -2,67 +2,109 @@
 import { useEffect, useState } from 'react';
 import Papa from 'papaparse';
 
-interface Employee {
-    sale_id: number;
-    customer_name: string;
-    product_name: string;
-    quantity_sold: number;
-    unit_price: number;
-    total_price: number;
-    sale_date: string;
-    payment_method: string;
-    store_location: string
-    employee_name: string;
-}
-
-interface GroupedData {
-    sale_date: string;
-    total_price: number;
-    unit_price: number;
-}
-
-export default function useMockData(limit: null | number = null) {
+export default function useMockData() {
     const [data, setData] = useState<Employee[]>([]);
-    const [groupedData, setGroupedData] = useState<GroupedData[]>([]);
+    const [groupedData, setGroupedData] = useState<GroupByWeek[]>([]);
 
     useEffect(() => {
         async function fetchData() {
-            const response = await fetch('/MOCK_DATA.csv');
-            const reader = response.body?.getReader();
-            const result = await reader?.read();
-            const decoder = new TextDecoder('utf-8');
-            const csv = decoder.decode(result?.value);
-            const parsedData = Papa.parse<Employee>(csv, { header: true });
-            setData(parsedData.data.slice(0, limit || parsedData.data.length))
+            try {
+                const response = await fetch('/MOCK_DATA.csv');
+                if (!response.ok) throw new Error("Lỗi khi tải file CSV");
+
+                const csv = await response.text(); // Đọc toàn bộ nội dung CSV
+                if (!csv) throw new Error("Dữ liệu CSV rỗng");
+
+                const parsedData = Papa.parse<Employee>(csv, { header: true, skipEmptyLines: true });
+                setData(parsedData.data);
+            } catch (error) {
+                console.error("Lỗi khi fetch hoặc parse CSV:", error);
+            }
         }
 
         fetchData();
     }, []);
 
-    const groupData = (data: Employee[]) => {
+    const groupExistSaleDate = (data: Employee[]) => {
         const grouped = data.reduce((acc, employee) => {
-            const { sale_date, total_price, unit_price } = employee;
+            const { sale_date, total_price, quantity_sold } = employee;
 
             if (acc[sale_date]) {
-                acc[sale_date].total_price += total_price;
-                acc[sale_date].unit_price += unit_price;
+                acc[sale_date].total_price = Number(acc[sale_date].total_price) + Number(total_price);
+                acc[sale_date].quantity_sold = Number(acc[sale_date].quantity_sold) + Number(quantity_sold);
             } else {
-                acc[sale_date] = { total_price, unit_price };
+                acc[sale_date] = {
+                    total_price: Number(total_price),
+                    quantity_sold: Number(quantity_sold)
+                };
             }
 
             return acc;
-        }, {} as Record<string, { total_price: number; unit_price: number }>);
+        }, {} as Record<string, { total_price: number; quantity_sold: number }>);
 
         return Object.entries(grouped).map(([sale_date, values]) => ({
             sale_date,
             total_price: values.total_price,
-            unit_price: values.unit_price
+            quantity_sold: values.quantity_sold
         }));
     };
 
+    const groupByWeek = (data: GroupExistSaleDate[]) => {
+        // Sắp xếp theo ngày tăng dần
+        data.sort((a, b) => new Date(a.sale_date).getTime() - new Date(b.sale_date).getTime());
+
+        let weeks: GroupByWeek[] = [];
+        let currentWeek: any = [];
+        let currentMonday: any = null;
+        let totalPrice = 0;
+        let quantitySold = 0;
+
+        data.forEach(item => {
+            let date = new Date(item.sale_date);
+
+            // Tìm ngày Thứ Hai của tuần hiện tại
+            if (!currentMonday || date < currentMonday) {
+                currentMonday = new Date(date);
+                currentMonday.setDate(currentMonday.getDate() - ((currentMonday.getDay() + 6) % 7)); // Lùi về Thứ Hai
+            }
+
+            // Nếu ngày hiện tại cách xa tuần hiện tại => tạo tuần mới
+            if (currentWeek.length > 0 && date >= new Date(currentMonday.getTime() + 7 * 24 * 60 * 60 * 1000)) {
+                weeks.push({
+                    week: 'W' + (weeks.length + 1),
+                    total_price: totalPrice,
+                    quantity_sold: Math.floor(quantitySold)
+                });
+
+                currentWeek = [];
+                totalPrice = 0
+                quantitySold = 0
+                currentMonday = new Date(date);
+                currentMonday.setDate(currentMonday.getDate() - ((currentMonday.getDay() + 6) % 7)); // Lùi về Thứ Hai
+            }
+
+            totalPrice += item.total_price
+            quantitySold += item.quantity_sold
+
+
+            currentWeek.push(item);
+        });
+
+        if (currentWeek.length > 0) {
+            weeks.push({
+                week: 'W' + (weeks.length + 1),
+                total_price: totalPrice,
+                quantity_sold: quantitySold
+            });
+        }
+
+        return weeks;
+    }
+
+
     useEffect(() => {
         if (data.length > 0) {
-            setGroupedData(groupData(data))
+            setGroupedData(groupByWeek(groupExistSaleDate(data)))
         }
     }, [data]);
 

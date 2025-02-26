@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/chart"
 import Link from 'next/link'
 import useMockData from '@/hooks/use_mockData'
+import { useEffect } from "react"
 
 const chartConfig = {
     desktop: {
@@ -32,7 +33,12 @@ const chartConfig = {
 
 
 export default function MyChart() {
-    const { groupedData } = useMockData(100)
+    const { groupedData, data } = useMockData()
+
+    useEffect(() => {
+        console.log(data);
+
+    }, [data])
 
     return (
         <div className='flex flex-col'>
@@ -57,7 +63,7 @@ export default function MyChart() {
                                 content={<ChartTooltipContent indicator="dashed" />}
                             />
                             <Bar dataKey="total_price" fill="var(--color-desktop)" radius={4} />
-                            <Bar dataKey="unit_price" fill="var(--color-mobile)" radius={4} />
+                            <Bar dataKey="quantity_sold" fill="var(--color-mobile)" radius={4} />
                         </BarChart>
                     </ChartContainer>
                 </CardContent>

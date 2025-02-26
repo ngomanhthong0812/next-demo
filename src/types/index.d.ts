@@ -1,4 +1,4 @@
-interface Employee {
+interface Customer {
     sale_id: number;
     customer_name: string;
     product_name: string;

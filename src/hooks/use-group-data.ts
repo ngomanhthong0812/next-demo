@@ -1,33 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react';
-import Papa from 'papaparse';
-
-export default function useMockData() {
-    const [data, setData] = useState<Employee[]>([]);
+export default function useGroupData(data: Customer[]) {
     const [groupedData, setGroupedData] = useState<GroupByWeek[]>([]);
 
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const response = await fetch('/MOCK_DATA.csv');
-                if (!response.ok) throw new Error("Lỗi khi tải file CSV");
-
-                const csv = await response.text(); // Đọc toàn bộ nội dung CSV
-                if (!csv) throw new Error("Dữ liệu CSV rỗng");
-
-                const parsedData = Papa.parse<Employee>(csv, { header: true, skipEmptyLines: true });
-                setData(parsedData.data);
-            } catch (error) {
-                console.error("Lỗi khi fetch hoặc parse CSV:", error);
-            }
-        }
-
-        fetchData();
-    }, []);
-
-    const groupExistSaleDate = (data: Employee[]) => {
-        const grouped = data.reduce((acc, employee) => {
-            const { sale_date, total_price, quantity_sold } = employee;
+    const groupExistSaleDate = (data: Customer[]) => {
+        const grouped = data.reduce((acc, customer) => {
+            const { sale_date, total_price, quantity_sold } = customer;
 
             if (acc[sale_date]) {
                 acc[sale_date].total_price = Number(acc[sale_date].total_price) + Number(total_price);
@@ -103,7 +81,7 @@ export default function useMockData() {
 
 
     useEffect(() => {
-        if (data.length > 0) {
+        if (data?.length > 0) {
             setGroupedData(groupByWeek(groupExistSaleDate(data)))
         }
     }, [data]);

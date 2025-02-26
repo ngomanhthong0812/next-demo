@@ -46,7 +46,7 @@ export default function MyChart() {
                         <BarChart accessibilityLayer data={groupedData}>
                             <CartesianGrid vertical={false} />
                             <XAxis
-                                dataKey="sale_date"
+                                dataKey="week"
                                 tickLine={false}
                                 tickMargin={10}
                                 axisLine={false}

@@ -37,9 +37,10 @@ export default function MyTable() {
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
 
-        setDisplayedItems(tableData?.slice(startIndex, endIndex))
-        setTotalPage(Math.ceil(tableData?.length / limit))
-    }, [page, tableData])
+        const currenData = tableData.length > 0 ? tableData : data
+        setDisplayedItems(currenData?.slice(startIndex, endIndex))
+        setTotalPage(Math.ceil(currenData?.length / limit))
+    }, [page, tableData, data])
 
     useEffect(() => {
         const timeout = setTimeout(() => {

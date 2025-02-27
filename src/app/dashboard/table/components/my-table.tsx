@@ -23,21 +23,21 @@ export default function MyTable() {
     })
 
     const [tableData, setTableData] = useState<Customer[]>([])
-    const [displayedItems, setDisplayedItems] = useState<Customer[]>();
+    const [displayedItems, setDisplayedItems] = useState<Customer[]>()
 
     const [isSort, setIsSort] = useState(false)
     const [colSort, setColSort] = useState('')
     const [search, setSearch] = useState('')
 
-    const [page, setPage] = useState(1);
-    const [totalPage, setTotalPage] = useState<number>(0);
+    const [page, setPage] = useState(1)
+    const [totalPage, setTotalPage] = useState<number>(0)
 
     useEffect(() => {
-        const limit = 50
-        const startIndex = (page - 1) * limit;
-        const endIndex = startIndex + limit;
+        const limit = 10
+        const startIndex = (page - 1) * limit
+        const endIndex = startIndex + limit
 
-        const currenData = tableData.length > 0 ? tableData : data
+        const currenData = tableData?.length > 0 || search ? tableData : data
         setDisplayedItems(currenData?.slice(startIndex, endIndex))
         setTotalPage(Math.ceil(currenData?.length / limit))
     }, [page, tableData, data])
@@ -48,7 +48,7 @@ export default function MyTable() {
         }, 500)
 
         return () => clearTimeout(timeout)
-    }, [search, data])
+    }, [search])
 
     useEffect(() => {
         handleSort([...tableData])
@@ -61,31 +61,31 @@ export default function MyTable() {
                     customer.customer_name.toLowerCase().includes(search.toLowerCase()) ||
                     customer.product_name.toLowerCase().includes(search.toLowerCase())
                 )
-                .sort((a: Customer, b: Customer) => isSort ? a.quantity_sold - b.quantity_sold : b.quantity_sold - a.quantity_sold);
-            setPage(1);
-            setTableData(newData);
+                .sort((a: Customer, b: Customer) => isSort ? a.quantity_sold - b.quantity_sold : b.quantity_sold - a.quantity_sold)
+            setTableData(newData)
             handleSort(newData)
         } else {
-            setTableData(data);
+            setTableData(data)
             handleSort(data)
         }
+        setPage(1);
     }
 
     const handleSort = (data: Customer[]) => {
-        const sortedData = [...data];
+        const sortedData = data ? [...data] : []
         const compareFn = (a: Customer, b: Customer) => {
             if (colSort === 'sale_date') {
                 return isSort
                     ? new Date(a.sale_date).getTime() - new Date(b.sale_date).getTime()
-                    : new Date(b.sale_date).getTime() - new Date(a.sale_date).getTime();
+                    : new Date(b.sale_date).getTime() - new Date(a.sale_date).getTime()
             } else {
-                const fieldA = a[colSort as keyof Customer]?.toString().toLowerCase();
-                const fieldB = b[colSort as keyof Customer]?.toString().toLowerCase();
+                const fieldA = a[colSort as keyof Customer]?.toString().toLowerCase()
+                const fieldB = b[colSort as keyof Customer]?.toString().toLowerCase()
                 return isSort ? fieldA.localeCompare(fieldB) : fieldB?.localeCompare(fieldA);
             }
         };
-        sortedData.sort(compareFn);
-        setTableData(sortedData);
+        sortedData.sort(compareFn)
+        setTableData(sortedData)
     }
 
     const handleChangeColSort = (value: string) => {
@@ -139,18 +139,18 @@ export default function MyTable() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {displayedItems?.map((employee) => (
-                        <TableRow key={employee.sale_id}>
-                            <TableCell className="font-medium">{employee.sale_id}</TableCell>
-                            <TableCell>{employee.customer_name}</TableCell>
-                            <TableCell>{employee.product_name}</TableCell>
-                            <TableCell>{employee.quantity_sold}</TableCell>
-                            <TableCell>{employee.unit_price}</TableCell>
-                            <TableCell>{employee.total_price}</TableCell>
-                            <TableCell>{employee.sale_date}</TableCell>
-                            <TableCell>{employee.payment_method}</TableCell>
-                            <TableCell>{employee.store_location}</TableCell>
-                            <TableCell className="text-right">{employee.employee_name}</TableCell>
+                    {displayedItems?.map((customer) => (
+                        <TableRow key={customer.sale_id}>
+                            <TableCell className="font-medium">{customer.sale_id}</TableCell>
+                            <TableCell>{customer.customer_name}</TableCell>
+                            <TableCell>{customer.product_name}</TableCell>
+                            <TableCell>{customer.quantity_sold}</TableCell>
+                            <TableCell>{customer.unit_price}</TableCell>
+                            <TableCell>{customer.total_price}</TableCell>
+                            <TableCell>{customer.sale_date}</TableCell>
+                            <TableCell>{customer.payment_method}</TableCell>
+                            <TableCell>{customer.store_location}</TableCell>
+                            <TableCell className="text-right">{customer.employee_name}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>

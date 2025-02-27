@@ -26,13 +26,14 @@ export default function MyTable() {
     const [displayedItems, setDisplayedItems] = useState<Customer[]>();
 
     const [isSort, setIsSort] = useState(false)
+    const [colSort, setColSort] = useState('')
     const [search, setSearch] = useState('')
 
     const [page, setPage] = useState(1);
     const [totalPage, setTotalPage] = useState<number>(0);
 
     useEffect(() => {
-        const limit = 100
+        const limit = 50
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
 
@@ -49,36 +50,49 @@ export default function MyTable() {
     }, [search, data])
 
     useEffect(() => {
-        if (isSort) {
-            setTableData([...tableData]
-                ?.sort((a: Customer, b: Customer) => a.quantity_sold - b.quantity_sold))
-        } else {
-            handleSearch()
-        }
-    }, [isSort])
+        handleSort([...tableData])
+    }, [isSort, colSort])
 
     const handleSearch = () => {
         if (search.trim()) {
             let newData = [...data]
-            if (isSort) {
-                newData = [...newData]
-                    ?.sort((a: Customer, b: Customer) => a.quantity_sold - b.quantity_sold)
-                    .filter(customer =>
-                        customer.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-                        customer.product_name.toLowerCase().includes(search.toLowerCase())
-                    )
-            } else {
-                newData = [...data]
-                    ?.filter(customer =>
-                        customer.customer_name.toLowerCase().includes(search.toLowerCase()) ||
-                        customer.product_name.toLowerCase().includes(search.toLowerCase())
-                    )
-            }
-            setPage(1)
-            setTableData(newData)
+                ?.filter(customer =>
+                    customer.customer_name.toLowerCase().includes(search.toLowerCase()) ||
+                    customer.product_name.toLowerCase().includes(search.toLowerCase())
+                )
+                .sort((a: Customer, b: Customer) => isSort ? a.quantity_sold - b.quantity_sold : b.quantity_sold - a.quantity_sold);
+            setPage(1);
+            setTableData(newData);
+            handleSort(newData)
         } else {
-            setIsSort(false)
-            setTableData(data)
+            setTableData(data);
+            handleSort(data)
+        }
+    }
+
+    const handleSort = (data: Customer[]) => {
+        const sortedData = [...data];
+        const compareFn = (a: Customer, b: Customer) => {
+            if (colSort === 'sale_date') {
+                return isSort
+                    ? new Date(a.sale_date).getTime() - new Date(b.sale_date).getTime()
+                    : new Date(b.sale_date).getTime() - new Date(a.sale_date).getTime();
+            } else {
+                const fieldA = a[colSort as keyof Customer]?.toString().toLowerCase();
+                const fieldB = b[colSort as keyof Customer]?.toString().toLowerCase();
+                return isSort ? fieldA.localeCompare(fieldB) : fieldB?.localeCompare(fieldA);
+            }
+        };
+        sortedData.sort(compareFn);
+        setTableData(sortedData);
+    }
+
+    const handleChangeColSort = (value: string) => {
+        if (colSort === value) {
+            setIsSort(prev => !prev)
+        } else {
+            setIsSort(true)
+            setColSort(value)
         }
     }
 
@@ -97,17 +111,27 @@ export default function MyTable() {
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[100px]">Sale ID</TableHead>
-                        <TableHead>Customer Name</TableHead>
-                        <TableHead>Product Name</TableHead>
-                        <TableHead onClick={() => setIsSort(prev => !prev)}>
+                        <TableHead onClick={() => handleChangeColSort('customer_name')}>
                             <div className="flex items-center">
-                                Quantity Sold
+                                Customer Name
                                 <ArrowUpDown className="ml-2 h-4 w-4" />
                             </div>
                         </TableHead>
+                        <TableHead onClick={() => handleChangeColSort('product_name')}>
+                            <div className="flex items-center">
+                                Product Name
+                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </div>
+                        </TableHead>
+                        <TableHead>Quantity Sold</TableHead>
                         <TableHead>Unit Price</TableHead>
                         <TableHead>Total Price</TableHead>
-                        <TableHead>Sale Date</TableHead>
+                        <TableHead onClick={() => handleChangeColSort('sale_date')}>
+                            <div className="flex items-center">
+                                Sale Date
+                                <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </div>
+                        </TableHead>
                         <TableHead>Payment Method</TableHead>
                         <TableHead>Store Location</TableHead>
                         <TableHead className="text-right">Employee Name</TableHead>
@@ -129,10 +153,11 @@ export default function MyTable() {
                         </TableRow>
                     ))}
                 </TableBody>
-            </Table>
+            </Table >
             {totalPage > 1 && (
                 <MyPagination page={page} totalPage={totalPage} setPage={setPage} />
-            )}
+            )
+            }
         </>
     )
 }

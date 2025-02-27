@@ -77,7 +77,7 @@ export default function MyChart() {
             </Card>
             <div className='mt-5'>
                 <Link
-                    href="/table"
+                    href="/dashboard/table"
                     className="my-5 border p-2 rounded-md"
                 >Open Table</Link>
             </div>

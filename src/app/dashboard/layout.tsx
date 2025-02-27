@@ -2,7 +2,7 @@ import { getCustomers } from "@/services/get-customers"
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query"
 import { ReactNode } from "react"
 
-const CustomersProvider = async ({ children }: { children: ReactNode }) => {
+const DashboardLayout = async ({ children }: { children: ReactNode }) => {
     const queryClient = new QueryClient()
 
     await queryClient.prefetchQuery({
@@ -16,4 +16,4 @@ const CustomersProvider = async ({ children }: { children: ReactNode }) => {
     )
 }
 
-export default CustomersProvider
+export default DashboardLayout
